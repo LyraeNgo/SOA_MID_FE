@@ -34,7 +34,7 @@ const Login = () => {
       }
     } catch (err) {
       setLoading(false);
-      setError("Lỗi kết nối server"+ err.message);
+      setError("Lỗi kết nối server" + err.message);
     }
   };
 
@@ -88,16 +88,6 @@ const Login = () => {
             {loading ? "Đang xử lý..." : "Đăng nhập"}
           </button>
         </form>
-
-        <p className="text-center text-sm text-gray-600 mt-4">
-          Chưa có tài khoản?{" "}
-          <a
-            href="/register"
-            className="text-blue-600 hover:underline font-medium"
-          >
-            Đăng ký
-          </a>
-        </p>
       </div>
     </div>
   );
