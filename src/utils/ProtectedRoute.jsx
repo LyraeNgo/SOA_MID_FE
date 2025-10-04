@@ -1,15 +1,12 @@
+// src/utils/protectedRoute.js
 import { Navigate } from "react-router-dom";
 
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
+export default function ProtectedRoute({ children }) {
+  const isAuth = localStorage.getItem("token"); // ví dụ check token
 
-  // Nếu không có token => chuyển hướng về /login
-  if (!token) {
+  if (!isAuth) {
     return <Navigate to="/" replace />;
   }
 
-  // Nếu có token => render children
   return children;
-};
-
-export default ProtectedRoute;
+}
