@@ -34,11 +34,10 @@ const Home = () => {
 
     fetchUser();
   }, []);
-
   return (
     <div className="flex flex-col justify-center items-center h-screen bg-gray-100 px-4">
       <h1 className="text-2xl font-bold text-gray-800 text-center mb-6">
-        Chào mừng bạn đến Ibanking 🎉
+        Chào mừng {user ? user.username : "bạn"} đến Ibanking 🎉
       </h1>
       <form className="w-full max-w-md">
         <Form user={user}></Form>
@@ -85,6 +84,7 @@ const Home = () => {
       >
         Green to Blue
       </button>
+
       <section>
         <div className="overflow-x-auto overflow-y-hidden border-b border-gray-200 dark:border-gray-700 mb-4">
           <ul className="flex flex-nowrap justify-center text-sm font-medium text-center text-gray-500">
