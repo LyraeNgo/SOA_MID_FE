@@ -12,7 +12,7 @@ const Form = ({ user }) => {
             htmlFor="first_name"
             className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
           >
-            First name
+            Username
           </label>
           <input
             type="text"
@@ -37,7 +37,7 @@ const Form = ({ user }) => {
             disabled
           />
         </div>
-        <div className="mb-6">
+        <div>
           <label
             htmlFor="email"
             className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
@@ -52,6 +52,9 @@ const Form = ({ user }) => {
             disabled
           />
         </div>
+        <div className="mb-6">
+          <label
+            htmlFor="balance"
 
         <div className="mb-6">
           <label
@@ -61,10 +64,10 @@ const Form = ({ user }) => {
             Balance
           </label>
           <input
-            type="String"
+            type="text"
             id="balance"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            value={balance}
+            value={user.balance ? `${user.balance.toLocaleString('vi-VN')} VND` : '0 VND'}
             disabled
           />
         </div>

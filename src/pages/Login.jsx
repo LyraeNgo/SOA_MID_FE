@@ -24,17 +24,14 @@ const Login = () => {
       setLoading(false);
 
       if (data.auth) {
-        // Lưu token vào localStorage
         localStorage.setItem("token", data.token);
-
-        // Điều hướng sang Home, truyền email
         navigate("/home", { state: { email } });
       } else {
         setError(data.message || "Đăng nhập thất bại");
       }
     } catch (err) {
       setLoading(false);
-      setError("Lỗi kết nối server" + err.message);
+      setError("Lỗi kết nối server: " + err.message);
     }
   };
 
