@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { userAPI, paymentAPI, handleAPIError, mockData } from "../utils/api";
+import { userAPI, paymentAPI, handleAPIError
+  
+ } from "../utils/api";
 
 const PaymentForm = () => {
   const [user, setUser] = useState(null);
@@ -21,7 +23,7 @@ const PaymentForm = () => {
         console.error("❌ Lỗi khi lấy user:", err);
         const errorMessage = handleAPIError(err);
         setError(errorMessage);
-        if (err.message.includes('401')) {
+        if (err.message.includes("401")) {
           navigate("/");
         }
       }
@@ -38,16 +40,19 @@ const PaymentForm = () => {
     setTuitionFee(0);
     setError("");
 
-    if (id.length === 8) { // Giả sử MSSV có 8 ký tự
+    if (id.length === 8) {
+      // Giả sử MSSV có 8 ký tự
       setIsValidating(true);
-      
+
       try {
         const data = await paymentAPI.searchStudent(id);
         if (data.success) {
           setStudentName(data.student.name);
           setTuitionFee(data.student.fee);
         } else {
-          setError(data.message || "Không tìm thấy thông tin sinh viên với MSSV này");
+          setError(
+            data.message || "Không tìm thấy thông tin sinh viên với MSSV này"
+          );
         }
       } catch (err) {
         setError("Lỗi khi tìm kiếm thông tin sinh viên: " + err.message);
@@ -67,7 +72,7 @@ const PaymentForm = () => {
         studentName,
         amount: tuitionFee,
       });
-      
+
       if (data.success) {
         navigate("/otp-verification", {
           state: {
@@ -88,7 +93,8 @@ const PaymentForm = () => {
     }
   };
 
-  const isFormValid = studentId && studentName && tuitionFee > 0 && tuitionFee <= user?.balance;
+  const isFormValid =
+    studentId && studentName && tuitionFee > 0 && tuitionFee <= user?.balance;
 
   if (!user) {
     return (
@@ -175,7 +181,9 @@ const PaymentForm = () => {
                     required
                   />
                   {isValidating && (
-                    <p className="text-sm text-blue-600 mt-1">Đang tìm kiếm...</p>
+                    <p className="text-sm text-blue-600 mt-1">
+                      Đang tìm kiếm...
+                    </p>
                   )}
                 </div>
                 <div>
@@ -196,7 +204,11 @@ const PaymentForm = () => {
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
-                    value={tuitionFee > 0 ? `${tuitionFee.toLocaleString('vi-VN')} VND` : ""}
+                    value={
+                      tuitionFee > 0
+                        ? `${tuitionFee.toLocaleString("vi-VN")} VND`
+                        : ""
+                    }
                     disabled
                   />
                 </div>
@@ -216,7 +228,9 @@ const PaymentForm = () => {
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
-                    value={`${user.balance?.toLocaleString('vi-VN') || '0'} VND`}
+                    value={`${
+                      user.balance?.toLocaleString("vi-VN") || "0"
+                    } VND`}
                     disabled
                   />
                 </div>
@@ -227,9 +241,15 @@ const PaymentForm = () => {
                   <input
                     type="text"
                     className={`w-full px-3 py-2 border rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed ${
-                      tuitionFee > user.balance ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      tuitionFee > user.balance
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
                     }`}
-                    value={tuitionFee > 0 ? `${tuitionFee.toLocaleString('vi-VN')} VND` : ""}
+                    value={
+                      tuitionFee > 0
+                        ? `${tuitionFee.toLocaleString("vi-VN")} VND`
+                        : ""
+                    }
                     disabled
                   />
                   {tuitionFee > user.balance && tuitionFee > 0 && (
@@ -254,7 +274,8 @@ const PaymentForm = () => {
                     <a href="#" className="text-blue-600 hover:underline">
                       Điều khoản và Điều kiện
                     </a>{" "}
-                    của dịch vụ thanh toán học phí. Tôi hiểu rằng giao dịch này không thể hoàn tác.
+                    của dịch vụ thanh toán học phí. Tôi hiểu rằng giao dịch này
+                    không thể hoàn tác.
                   </label>
                 </div>
               </div>

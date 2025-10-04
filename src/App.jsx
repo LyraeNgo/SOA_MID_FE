@@ -13,53 +13,23 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Login không dùng layout */}
+        {/* Public route */}
         <Route path="/" element={<Login />} />
 
-        {/* Các route cần layout */}
+        {/* Protected routes */}
         <Route
           element={
             <ProtectedRoute>
               <Layout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/payment"
-          element={
-            <ProtectedRoute>
-              <PaymentForm />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/otp-verification"
-          element={
-            <ProtectedRoute>
-              <OTPVerification />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/payment-success"
-          element={
-            <ProtectedRoute>
-              <PaymentSuccess />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/transaction-history"
-          element={
-            <ProtectedRoute>
-              <TransactionHistory />
-            </ProtectedRoute>
-          }
-        />
         >
           <Route path="/home" element={<Home />} />
-          <Route path="/history" element={<History />}></Route>
-          {/* Có thể thêm nhiều route khác ở đây */}
+          <Route path="/payment" element={<PaymentForm />} />
+          <Route path="/otp-verification" element={<OTPVerification />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/transaction-history" element={<TransactionHistory />} />
+          <Route path="/history" element={<History />} />
         </Route>
       </Routes>
     </Router>
