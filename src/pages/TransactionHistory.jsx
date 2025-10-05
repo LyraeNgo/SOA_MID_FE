@@ -1,205 +1,201 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { paymentAPI, handleAPIError } from "../utils/api";
 import { useNavigate } from "react-router-dom";
-import { paymentAPI } from "../utils/api";
 
 const TransactionHistory = () => {
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [transactions, setTransactions] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const limit = 10;
+
+  // ...existing code...
+  // Gọi API lấy lịch sử giao dịch
+  // Lấy transaction từ BE chuẩn
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      const data = await paymentAPI.getAllTransactions(page, limit);
+      // Nếu BE trả về mảng, gán trực tiếp, nếu trả về object thì lấy transactions
+      if (Array.isArray(data)) {
+        setTransactions(data);
+        setTotalPages(1); // Nếu không có phân trang từ BE
+      } else {
+        setTransactions(data.transactions || []);
+        setTotalPages(data.totalPages || 1);
+      }
+    } catch (error) {
+      alert(handleAPIError(error));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const data = await paymentAPI.getTransactionHistory();
-        setTransactions(data.transactions || []);
-      } catch (err) {
-        setError("Lỗi kết nối server: " + err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTransactions();
-  }, [navigate]);
+  }, [page]);
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString('vi-VN');
-  };
+  // Lọc & tìm kiếm giao dịch
+  const filteredTransactions = transactions.filter((txn) => {
+    const matchesSearch =
+      searchTerm === "" ||
+      txn._id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      txn.username?.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+    const matchesStatus =
+      statusFilter === "" || txn.status === statusFilter;
+
+    let matchesDate = true;
+    if (startDate) {
+      matchesDate = matchesDate && new Date(txn.createdAt) >= new Date(startDate);
     }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'Thành công';
-      case 'pending':
-        return 'Đang xử lý';
-      case 'failed':
-        return 'Thất bại';
-      default:
-        return 'Không xác định';
+    if (endDate) {
+      matchesDate = matchesDate && new Date(txn.createdAt) <= new Date(endDate);
     }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-100 py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="flex justify-center items-center h-64">
-              <div className="text-lg">Đang tải lịch sử giao dịch...</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    return matchesSearch && matchesStatus && matchesDate;
+  });
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-800">
-              Lịch sử giao dịch
-            </h1>
+      {/* Header */}
+      <div className="flex items-center justify-between py-4 px-6 bg-white shadow mb-4 rounded-lg">
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          onClick={() => navigate("/")}
+        >
+          ← Về trang chủ
+        </button>
+        <h2 className="text-xl font-bold">Lịch sử giao dịch</h2>
+        <div className="w-20" />
+      </div>
+
+      {/* Search + Filters */}
+      <div className="bg-white p-4 shadow rounded-lg mb-4 flex flex-wrap gap-4 items-center">
+        {/* Search */}
+        <input
+          type="text"
+          placeholder="Tìm kiếm mã giao dịch hoặc username"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="border px-3 py-2 rounded w-64"
+        />
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          onClick={() => setSearchTerm("")}
+        >
+          Search
+        </button>
+        {/* Status Filter */}
+        <select
+          className="border px-3 py-2 rounded"
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+        >
+          <option value="">Tất cả trạng thái</option>
+          <option value="success">Thành công</option>
+          <option value="failed">Thất bại</option>
+        </select>
+        {/* Date Range Filter */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm">Từ ngày</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
+            className="border px-3 py-2 rounded"
+          />
+          <label className="text-sm">Đến ngày</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={e => setEndDate(e.target.value)}
+            className="border px-3 py-2 rounded"
+          />
+        </div>
+      </div>
+
+      {/* Transaction List */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        {loading ? (
+          <div className="p-6 text-center text-gray-500">Đang tải...</div>
+        ) : filteredTransactions.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            Không có giao dịch nào.
+          </div>
+        ) : (
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="p-3 text-left">Mã giao dịch</th>
+                <th className="p-3 text-left">Người dùng</th>
+                <th className="p-3 text-left">MSSV</th>
+                <th className="p-3 text-left">Số tiền</th>
+                <th className="p-3 text-left">Trạng thái</th>
+                <th className="p-3 text-left">Ngày tạo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredTransactions.map((txn) => (
+                <tr key={txn._id} className="border-t hover:bg-gray-50">
+                  <td className="p-3">{txn._id}</td>
+                  <td className="p-3">{txn.username}</td>
+                  <td className="p-3">{txn.studentId}</td>
+                  <td className="p-3">{txn.amount?.toLocaleString()} ₫</td>
+                  <td className="p-3">{txn.description}</td>
+                  <td
+                    className={`p-3 font-medium ${txn.status === "completed"
+                      ? "text-green-600"
+                      : txn.status === "failed"
+                        ? "text-red-600"
+                        : "text-gray-500"
+                      }`}
+                  >
+                    {txn.status}
+                  </td>
+                  <td className="p-3">
+                    {new Date(txn.createdAt).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex flex-col items-center mt-6 gap-2">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            disabled={page === 1}
+            className="px-3 py-2 bg-gray-200 rounded-lg disabled:opacity-50"
+          >
+            ← Trước
+          </button>
+          {/* Pagination list */}
+          {[...Array(totalPages)].map((_, idx) => (
             <button
-              onClick={() => navigate("/home")}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
+              key={idx + 1}
+              onClick={() => setPage(idx + 1)}
+              className={`px-3 py-2 rounded-lg border ${page === idx + 1 ? "bg-blue-500 text-white" : "bg-white text-gray-700"}`}
             >
-              Về trang chủ
+              {idx + 1}
             </button>
-          </div>
+          ))}
+          <button
+            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+            disabled={page === totalPages}
+            className="px-3 py-2 bg-gray-200 rounded-lg disabled:opacity-50"
+          >
+            Sau →
+          </button>
         </div>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {/* Transaction List */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          {transactions.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                Chưa có giao dịch nào
-              </h3>
-              <p className="text-gray-500 mb-4">
-                Bạn chưa thực hiện giao dịch thanh toán học phí nào
-              </p>
-              <button
-                onClick={() => navigate("/payment")}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
-              >
-                Thực hiện giao dịch đầu tiên
-              </button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full table-auto">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Mã giao dịch
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      MSSV
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tên sinh viên
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Số tiền
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Trạng thái
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Thời gian
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {transactions.map((transaction, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                        {transaction.transactionCode || transaction.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {transaction.studentId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {transaction.studentName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
-                        {transaction.amount?.toLocaleString('vi-VN')} VND
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(transaction.status)}`}>
-                          {getStatusText(transaction.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(transaction.createdAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* Summary */}
-        {transactions.length > 0 && (
-          <div className="mt-6 bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Tổng kết
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">
-                  {transactions.length}
-                </div>
-                <div className="text-sm text-gray-600">Tổng giao dịch</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">
-                  {transactions.filter(t => t.status === 'completed').length}
-                </div>
-                <div className="text-sm text-gray-600">Giao dịch thành công</div>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">
-                  {transactions
-                    .filter(t => t.status === 'completed')
-                    .reduce((sum, t) => sum + (t.amount || 0), 0)
-                    .toLocaleString('vi-VN')} VND
-                </div>
-                <div className="text-sm text-gray-600">Tổng tiền đã thanh toán</div>
-              </div>
-            </div>
-          </div>
-        )}
+        <span className="text-gray-500">Trang {page} / {totalPages}</span>
       </div>
     </div>
   );
