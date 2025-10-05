@@ -8,10 +8,12 @@ import OTPVerification from "./pages/OTPVerification";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import TransactionHistory from "./pages/TransactionHistory";
 import { History } from "./pages/History";
+import ScrollTop from "./components/ScrollTop";
 
 export default function App() {
   return (
     <Router>
+      <ScrollTop></ScrollTop>
       <Routes>
         {/* Public route */}
         <Route path="/" element={<Login />} />
