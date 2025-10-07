@@ -63,6 +63,14 @@ export const userAPI = {
 
 // Payment API
 export const paymentAPI = {
+  // Lấy tất cả transaction từ BE
+  getAllTransactions: async (page = 1, limit = 10) => {
+    const response = await fetch(`${API_BASE_URL}/transactions?page=${page}&limit=${limit}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
   // Tìm kiếm thông tin sinh viên
   searchStudent: async (studentId) => {
     const response = await fetch(`${API_BASE_URL}/payment/search-student`, {
@@ -149,18 +157,18 @@ export const studentAPI = {
 // Error handling utility
 export const handleAPIError = (error) => {
   console.error('API Error:', error);
-  
+
   if (error.message.includes('401') || error.message.includes('Unauthorized')) {
     // Token expired or invalid
     localStorage.removeItem('token');
     window.location.href = '/';
     return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
   }
-  
+
   if (error.message.includes('Network error')) {
     return 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.';
   }
-  
+
   return error.message || 'Có lỗi xảy ra. Vui lòng thử lại sau.';
 };
 
