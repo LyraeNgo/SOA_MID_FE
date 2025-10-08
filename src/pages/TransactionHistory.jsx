@@ -14,20 +14,24 @@ const TransactionHistory = () => {
   const [loading, setLoading] = useState(false);
   const limit = 10;
 
-  // ...existing code...
   // Gọi API lấy lịch sử giao dịch
-  // Lấy transaction từ BE chuẩn
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const data = await paymentAPI.getAllTransactions(page, limit);
-      // Nếu BE trả về mảng, gán trực tiếp, nếu trả về object thì lấy transactions
-      if (Array.isArray(data)) {
-        setTransactions(data);
-        setTotalPages(1); // Nếu không có phân trang từ BE
-      } else {
-        setTransactions(data.transactions || []);
+      const data = await paymentAPI.getAllTransactions({
+        page,
+        limit,
+        searchTerm,
+        status: statusFilter,
+        startDate,
+        endDate,
+      });
+      if (data && Array.isArray(data.transactions)) {
+        setTransactions(data.transactions);
         setTotalPages(data.totalPages || 1);
+      } else {
+        setTransactions([]);
+        setTotalPages(1);
       }
     } catch (error) {
       alert(handleAPIError(error));
@@ -38,27 +42,7 @@ const TransactionHistory = () => {
 
   useEffect(() => {
     fetchTransactions();
-  }, [page]);
-
-  // Lọc & tìm kiếm giao dịch
-  const filteredTransactions = transactions.filter((txn) => {
-    const matchesSearch =
-      searchTerm === "" ||
-      txn._id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      txn.username?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = statusFilter === "" || txn.status === statusFilter;
-
-    let matchesDate = true;
-    if (startDate) {
-      matchesDate =
-        matchesDate && new Date(txn.createdAt) >= new Date(startDate);
-    }
-    if (endDate) {
-      matchesDate = matchesDate && new Date(txn.createdAt) <= new Date(endDate);
-    }
-    return matchesSearch && matchesStatus && matchesDate;
-  });
+  }, [page, statusFilter, startDate, endDate]);
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
@@ -81,15 +65,19 @@ const TransactionHistory = () => {
           type="text"
           placeholder="Tìm kiếm mã gd, username"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)} // chỉ cập nhật, không fetch
           className="border px-3 py-2 rounded w-64"
         />
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          onClick={() => setSearchTerm("")}
+          onClick={() => {
+            setPage(1); // về trang 1 khi search
+            fetchTransactions(); // gọi hàm fetch khi nhấn nút
+          }}
         >
           Search
         </button>
+
         {/* Status Filter */}
         <select
           className="border px-3 py-2 rounded"
@@ -97,7 +85,7 @@ const TransactionHistory = () => {
           onChange={(e) => setStatusFilter(e.target.value)}
         >
           <option value="">Tất cả trạng thái</option>
-          <option value="success">Thành công</option>
+          <option value="completed">Thành công</option>
           <option value="failed">Thất bại</option>
         </select>
         {/* Date Range Filter */}
@@ -123,7 +111,7 @@ const TransactionHistory = () => {
       <div className="bg-white shadow rounded-lg overflow-hidden">
         {loading ? (
           <div className="p-6 text-center text-gray-500">Đang tải...</div>
-        ) : filteredTransactions.length === 0 ? (
+        ) : transactions.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             Không có giao dịch nào.
           </div>
@@ -141,7 +129,7 @@ const TransactionHistory = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map((txn) => (
+              {transactions.map((txn) => (
                 <tr key={txn._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">{txn._id}</td>
                   <td className="p-3">{txn.username}</td>
@@ -160,7 +148,15 @@ const TransactionHistory = () => {
                     {txn.status}
                   </td>
                   <td className="p-3">
-                    {new Date(txn.createdAt).toLocaleString()}
+                    {(() => {
+                      const d = new Date(txn.createdAt);
+                      const day = d.getDate().toString().padStart(2, "0");
+                      const month = (d.getMonth() + 1)
+                        .toString()
+                        .padStart(2, "0");
+                      const year = d.getFullYear();
+                      return `${day}/${month}/${year}`;
+                    })()}
                   </td>
                 </tr>
               ))}
