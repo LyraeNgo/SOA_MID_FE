@@ -70,39 +70,16 @@ export const userAPI = {
 };
 
 // Payment API
-export const paymentAPI = {
-  /**
-   * Lấy tất cả transaction từ BE với filter/search/pagination
-   * @param {Object} params - { page, limit, searchTerm, status, startDate, endDate }
-   * @returns {Promise<Object|null>} - { transactions, totalPages } hoặc null nếu lỗi
-   */
-  getAllTransactions: async ({
-    page = 1,
-    limit = 10,
-    searchTerm,
-    status,
-    startDate,
-    endDate,
-  }) => {
-    const params = { page, limit, searchTerm, status, startDate, endDate };
-    const queryString = Object.entries(params)
-      .filter(([_, v]) => v !== undefined && v !== "") // Bỏ qua giá trị rỗng
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-      .join("&");
 
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/transactions?${queryString}`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
-        }
-      );
-      return await handleResponse(response);
-    } catch (error) {
-      console.error("getAllTransactions error:", error);
-      return null;
-    }
+export const paymentAPI = {
+  // Tìm kiếm thông tin sinh viên
+  searchStudent: async (studentId) => {
+    const response = await fetch(`${API_BASE_URL}/payment/search-student`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ studentId }),
+    });
+    return handleResponse(response);
   },
 
   // Tạo giao dịch và gửi OTP
@@ -135,16 +112,35 @@ export const paymentAPI = {
     return handleResponse(response);
   },
 
-  // Lấy lịch sử giao dịch
-  getTransactionHistory: async (page = 1, limit = 10) => {
-    const response = await fetch(
-      `${API_BASE_URL}/payment/history?page=${page}&limit=${limit}`,
-      {
-        method: "GET",
-        headers: getAuthHeaders(),
-      }
-    );
-    return handleResponse(response);
+  //lấy lịch sử giao dịch
+
+  getAllTransactions: async ({
+    page = 1,
+    limit = 10,
+    searchTerm,
+    status,
+    startDate,
+    endDate,
+  }) => {
+    const params = { page, limit, searchTerm, status, startDate, endDate };
+    const queryString = Object.entries(params)
+      .filter(([_, v]) => v !== undefined && v !== "") // Bỏ qua giá trị rỗng
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join("&");
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/transactions?${queryString}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error("getAllTransactions error:", error);
+      return null;
+    }
   },
 
   // Hủy giao dịch
