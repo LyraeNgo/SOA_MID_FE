@@ -63,7 +63,7 @@ const TransactionHistory = () => {
         {/* Search */}
         <input
           type="text"
-          placeholder="Tìm kiếm mã gd, username"
+          placeholder="Tìm kiếm mã gd, mssv..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)} // chỉ cập nhật, không fetch
           className="border px-3 py-2 rounded w-64"
@@ -120,10 +120,9 @@ const TransactionHistory = () => {
             <thead className="bg-gray-200">
               <tr>
                 <th className="p-3 text-left">Mã giao dịch</th>
-                <th className="p-3 text-left">Người dùng</th>
                 <th className="p-3 text-left">MSSV</th>
                 <th className="p-3 text-left">Số tiền</th>
-                <th className="p-3 text-center">Nội dung</th>
+                <th className="p-3 text-left">Nội dung</th>
                 <th className="p-3 text-left">Trạng thái</th>
                 <th className="p-3 text-center">Ngày tạo (dd/MM/yy)</th>
               </tr>
@@ -135,7 +134,6 @@ const TransactionHistory = () => {
                   className="border-t hover:bg-gray-50"
                 >
                   <td className="p-3 ">{txn.transactionCode}</td>
-                  <td className="p-3">{txn.username}</td>
                   <td className="p-3">{txn.studentId}</td>
                   <td className="p-3">{txn.amount?.toLocaleString()} ₫</td>
                   <td className="p-3">{txn.description}</td>
