@@ -1,31 +1,39 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = "http://localhost:5000/api";
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` })
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 };
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Network error' }));
-    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (err) {
+    console.error("Lỗi parse JSON từ API:", err);
+    data = null;
   }
-  return response.json();
+  if (!response.ok) {
+    throw new Error(
+      (data && data.message) || `HTTP error! status: ${response.status}`
+    );
+  }
+  return data;
 };
 
 // Auth API
 export const authAPI = {
   login: async (email, password) => {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ email, password }),
     });
@@ -34,49 +42,56 @@ export const authAPI = {
 
   logout: async () => {
     const response = await fetch(`${API_BASE_URL}/auth/logout`, {
-      method: 'POST',
+      method: "POST",
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
-  }
+  },
 };
 
 // User API
 export const userAPI = {
   getProfile: async () => {
-    const response = await fetch(`${API_BASE_URL}/users/me`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API_BASE_URL}/users/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
     });
-    return handleResponse(response);
+
+    if (!res.ok) throw new Error(`${res.status}`);
+    return res.json();
   },
 
   updateProfile: async (userData) => {
     const response = await fetch(`${API_BASE_URL}/users/me`, {
-      method: 'PUT',
+      method: "PUT",
       headers: getAuthHeaders(),
       body: JSON.stringify(userData),
     });
     return handleResponse(response);
-  }
+  },
 };
 
 // Payment API
+
 export const paymentAPI = {
-  // Tìm kiếm thông tin sinh viên
-  searchStudent: async (studentId) => {
-    const response = await fetch(`${API_BASE_URL}/payment/search-student`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ studentId }),
-    });
+  searchStudentId: async (studentId) => {
+    const response = await fetch(
+      `http://localhost:5004/api/transaction/pending/${studentId}`,
+      {
+        headers: getAuthHeaders(),
+      }
+    );
     return handleResponse(response);
   },
 
   // Tạo giao dịch và gửi OTP
   createTransaction: async (transactionData) => {
-    const response = await fetch(`${API_BASE_URL}/payment/create-transaction`, {
-      method: 'POST',
+    const response = await fetch(`${API_BASE_URL}/payment/charge`, {
+      method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(transactionData),
     });
@@ -86,7 +101,7 @@ export const paymentAPI = {
   // Xác thực OTP
   verifyOTP: async (transactionId, otp) => {
     const response = await fetch(`${API_BASE_URL}/payment/verify-otp`, {
-      method: 'POST',
+      method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ transactionId, otp }),
     });
@@ -96,31 +111,53 @@ export const paymentAPI = {
   // Gửi lại OTP
   resendOTP: async (transactionId) => {
     const response = await fetch(`${API_BASE_URL}/payment/resend-otp`, {
-      method: 'POST',
+      method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ transactionId }),
     });
     return handleResponse(response);
   },
 
-  // Lấy lịch sử giao dịch
-  getTransactionHistory: async (page = 1, limit = 10) => {
-    const response = await fetch(`${API_BASE_URL}/payment/history?page=${page}&limit=${limit}`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
-    return handleResponse(response);
+  //lấy lịch sử giao dịch
+
+  getAllTransactions: async ({
+    page = 1,
+    limit = 10,
+    searchTerm,
+    status,
+    startDate,
+    endDate,
+  }) => {
+    const params = { page, limit, searchTerm, status, startDate, endDate };
+    const queryString = Object.entries(params)
+      .filter(([_, v]) => v !== undefined && v !== "") // Bỏ qua giá trị rỗng
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join("&");
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/transactions?${queryString}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error("getAllTransactions error:", error);
+      return null;
+    }
   },
 
   // Hủy giao dịch
   cancelTransaction: async (transactionId) => {
     const response = await fetch(`${API_BASE_URL}/payment/cancel`, {
-      method: 'POST',
+      method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ transactionId }),
     });
     return handleResponse(response);
-  }
+  },
 };
 
 // Student API (for TDTU students)
@@ -128,7 +165,7 @@ export const studentAPI = {
   // Lấy thông tin học phí của sinh viên
   getTuitionInfo: async (studentId) => {
     const response = await fetch(`${API_BASE_URL}/student/tuition-info`, {
-      method: 'POST',
+      method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ studentId }),
     });
@@ -138,30 +175,30 @@ export const studentAPI = {
   // Lấy lịch sử học phí
   getTuitionHistory: async (studentId) => {
     const response = await fetch(`${API_BASE_URL}/student/tuition-history`, {
-      method: 'POST',
+      method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ studentId }),
     });
     return handleResponse(response);
-  }
+  },
 };
 
 // Error handling utility
 export const handleAPIError = (error) => {
-  console.error('API Error:', error);
-  
-  if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+  console.error("API Error:", error);
+
+  if (error.message.includes("401") || error.message.includes("Unauthorized")) {
     // Token expired or invalid
-    localStorage.removeItem('token');
-    window.location.href = '/';
-    return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+    localStorage.removeItem("token");
+    window.location.href = "/";
+    return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
   }
-  
-  if (error.message.includes('Network error')) {
-    return 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.';
+
+  if (error.message.includes("Network error")) {
+    return "Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.";
   }
-  
-  return error.message || 'Có lỗi xảy ra. Vui lòng thử lại sau.';
+
+  return error.message || "Có lỗi xảy ra. Vui lòng thử lại sau.";
 };
 
 // Utility functions
@@ -182,5 +219,5 @@ export default {
   studentAPI,
   handleAPIError,
   generateOTP,
-  generateTransactionCode
+  generateTransactionCode,
 };

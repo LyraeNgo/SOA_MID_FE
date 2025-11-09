@@ -5,7 +5,7 @@ const Form = ({ user }) => {
   const { username, email, phoneNumber, balance } = user;
 
   return (
-    <form className="block max-w-lg p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+    <form className="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
       <div>
         <label
           htmlFor="first_name"

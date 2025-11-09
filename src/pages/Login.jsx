@@ -14,7 +14,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetch("http://localhost:5001/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -23,7 +23,7 @@ const Login = () => {
       const data = await res.json();
       setLoading(false);
 
-      if (data.auth) {
+      if (data.token) {
         localStorage.setItem("token", data.token);
         navigate("/home", { state: { email } });
       } else {
