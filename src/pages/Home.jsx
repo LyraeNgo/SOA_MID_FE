@@ -15,7 +15,7 @@ const Home = () => {
           return;
         }
 
-        const res = await fetch("http://localhost:5000/api/users/me", {
+        const res = await fetch("http://localhost:5005/api/users/me", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

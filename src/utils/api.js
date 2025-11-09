@@ -52,11 +52,17 @@ export const authAPI = {
 // User API
 export const userAPI = {
   getProfile: async () => {
-    const response = await fetch(`${API_BASE_URL}/users/me`, {
-      method: "GET",
-      headers: getAuthHeaders(),
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API_BASE_URL}/users/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
     });
-    return handleResponse(response);
+
+    if (!res.ok) throw new Error(`${res.status}`);
+    return res.json();
   },
 
   updateProfile: async (userData) => {
@@ -72,19 +78,19 @@ export const userAPI = {
 // Payment API
 
 export const paymentAPI = {
-  // Tìm kiếm thông tin sinh viên
-  searchStudent: async (studentId) => {
-    const response = await fetch(`${API_BASE_URL}/payment/search-student`, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ studentId }),
-    });
+  searchStudentId: async (studentId) => {
+    const response = await fetch(
+      `http://localhost:5004/api/transaction/pending/${studentId}`,
+      {
+        headers: getAuthHeaders(),
+      }
+    );
     return handleResponse(response);
   },
 
   // Tạo giao dịch và gửi OTP
   createTransaction: async (transactionData) => {
-    const response = await fetch(`${API_BASE_URL}/payment/create-transaction`, {
+    const response = await fetch(`${API_BASE_URL}/payment/charge`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(transactionData),

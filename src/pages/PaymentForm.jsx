@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { userAPI, paymentAPI, handleAPIError
-  
- } from "../utils/api";
+import { userAPI, paymentAPI, handleAPIError } from "../utils/api.js";
 
 const PaymentForm = () => {
   const [user, setUser] = useState(null);
@@ -45,17 +43,17 @@ const PaymentForm = () => {
       setIsValidating(true);
 
       try {
-        const data = await paymentAPI.searchStudent(id);
-        if (data.success) {
-          setStudentName(data.student.name);
-          setTuitionFee(data.student.fee);
+        const data = await paymentAPI.searchStudentId(id);
+        if (data) {
+          setStudentName("test");
+          setTuitionFee(data.amount);
         } else {
           setError(
             data.message || "Không tìm thấy thông tin sinh viên với MSSV này"
           );
         }
       } catch (err) {
-        setError("Lỗi khi tìm kiếm thông tin sinh viên: " + err.message);
+        setError("Nhập sai Mã số sinh viên hoặc Học phí đã được thanh toán ");
       } finally {
         setIsValidating(false);
       }
@@ -68,7 +66,7 @@ const PaymentForm = () => {
 
     try {
       const data = await paymentAPI.createTransaction({
-        studentId,
+        studentId: studentId,
         studentName,
         amount: tuitionFee,
       });
@@ -111,12 +109,6 @@ const PaymentForm = () => {
           <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
             Thanh Toán Học Phí
           </h1>
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-              {error}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Phần 1: Thông tin người nộp tiền */}
@@ -166,6 +158,11 @@ const PaymentForm = () => {
               <h2 className="text-xl font-semibold text-gray-700 mb-4">
                 2. Thông tin học phí
               </h2>
+              {error && (
+                <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                  {error}
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
