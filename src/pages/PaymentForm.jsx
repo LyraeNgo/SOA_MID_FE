@@ -5,8 +5,8 @@ import { userAPI, paymentAPI, handleAPIError } from "../utils/api.js";
 const PaymentForm = () => {
   const [user, setUser] = useState(null);
   const [studentId, setStudentId] = useState("");
-  const [studentName, setStudentName] = useState("");
   const [tuitionFee, setTuitionFee] = useState(0);
+  const [pendingTransaction, setPendingTransaction] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,9 +34,9 @@ const PaymentForm = () => {
   const handleStudentIdChange = async (e) => {
     const id = e.target.value;
     setStudentId(id);
-    setStudentName("");
     setTuitionFee(0);
     setError("");
+    setPendingTransaction(null);
 
     if (id.length === 8) {
       // Giả sử MSSV có 8 ký tự
@@ -45,15 +45,14 @@ const PaymentForm = () => {
       try {
         const data = await paymentAPI.searchStudentId(id);
         if (data) {
-          setStudentName("test");
-          setTuitionFee(data.amount);
-        } else {
-          setError(
-            data.message || "Không tìm thấy thông tin sinh viên với MSSV này"
-          );
+          setPendingTransaction(data);
+          setTuitionFee(data.amount || 0);
         }
       } catch (err) {
-        setError("Nhập sai Mã số sinh viên hoặc Học phí đã được thanh toán ");
+        setError(
+          handleAPIError(err) ||
+            "Nhập sai Mã số sinh viên hoặc Học phí đã được thanh toán "
+        );
       } finally {
         setIsValidating(false);
       }
@@ -65,34 +64,45 @@ const PaymentForm = () => {
     setIsSubmitting(true);
 
     try {
-      const data = await paymentAPI.createTransaction({
-        studentId: studentId,
-        studentName,
-        amount: tuitionFee,
+      if (!pendingTransaction) {
+        setError("Không tìm thấy giao dịch pending cho MSSV này");
+        return;
+      }
+
+      const data = await paymentAPI.requestCharge({
+        userId: user._id,
+        studentId: pendingTransaction.studentId,
+        transactionId: pendingTransaction._id,
+        email: user.email,
       });
 
-      if (data.success) {
-        navigate("/otp-verification", {
-          state: {
-            transactionId: data.transactionId,
-            studentId,
-            studentName,
-            amount: tuitionFee,
-            userEmail: user.email,
-          },
-        });
-      } else {
-        setError(data.message || "Có lỗi xảy ra khi tạo giao dịch");
+      if (!data.success) {
+        setError(data.message || data.error || "Không thể gửi yêu cầu thanh toán");
+        return;
       }
+
+      navigate("/otp-verification", {
+        state: {
+          transactionId: data.transactionId || pendingTransaction._id,
+          studentId: pendingTransaction.studentId,
+          amount: pendingTransaction.amount,
+          userEmail: user.email,
+          userId: user._id,
+          studentName: pendingTransaction.studentName || "",
+        },
+      });
     } catch (err) {
-      setError("Lỗi kết nối server: " + err.message);
+      setError(handleAPIError(err));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const isFormValid =
-    studentId && studentName && tuitionFee > 0 && tuitionFee <= user?.balance;
+    studentId &&
+    pendingTransaction &&
+    tuitionFee > 0 &&
+    tuitionFee <= user?.balance;
 
   if (!user) {
     return (
@@ -182,17 +192,6 @@ const PaymentForm = () => {
                       Đang tìm kiếm...
                     </p>
                   )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Họ tên sinh viên
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
-                    value={studentName}
-                    disabled
-                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

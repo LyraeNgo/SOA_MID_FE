@@ -8,7 +8,8 @@ const PaymentSuccess = () => {
   const location = useLocation();
 
   // Lấy thông tin giao dịch từ state
-  const { transactionId, studentId, studentName, amount, transactionCode } = location.state || {};
+  const { transactionId, studentId, studentName, amount, transactionCode } =
+    location.state || {};
 
   useEffect(() => {
     if (!transactionId) {
@@ -109,10 +110,14 @@ const PaymentSuccess = () => {
                 <span className="text-green-700 font-medium">MSSV:</span>
                 <span className="font-semibold">{studentId}</span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-green-200">
-                <span className="text-green-700 font-medium">Tên sinh viên:</span>
-                <span className="font-semibold">{studentName}</span>
-              </div>
+              {studentName && (
+                <div className="flex justify-between items-center py-2 border-b border-green-200">
+                  <span className="text-green-700 font-medium">
+                    Tên sinh viên:
+                  </span>
+                  <span className="font-semibold">{studentName}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center py-2 border-b border-green-200">
                 <span className="text-green-700 font-medium">Số tiền thanh toán:</span>
                 <span className="font-bold text-green-600 text-lg">

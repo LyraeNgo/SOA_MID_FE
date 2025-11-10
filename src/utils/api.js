@@ -80,7 +80,7 @@ export const userAPI = {
 export const paymentAPI = {
   searchStudentId: async (studentId) => {
     const response = await fetch(
-      `http://localhost:5004/api/transaction/pending/${studentId}`,
+      `${API_BASE_URL}/transaction/pending/${studentId}`,
       {
         headers: getAuthHeaders(),
       }
@@ -88,32 +88,31 @@ export const paymentAPI = {
     return handleResponse(response);
   },
 
-  // Tạo giao dịch và gửi OTP
-  createTransaction: async (transactionData) => {
-    const response = await fetch(`${API_BASE_URL}/payment/charge`, {
+  // Yêu cầu thanh toán và gửi OTP
+  requestCharge: async ({ userId, studentId, transactionId, email }) => {
+    const transactiondata = { userId, studentId, transactionId, email };
+
+    const response = await fetch(`https://localhost:5006/api/payment/request-charge`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify(transactionData),
+      body: JSON.stringify(transactiondata),
     });
+
     return handleResponse(response);
   },
 
-  // Xác thực OTP
-  verifyOTP: async (transactionId, otp) => {
-    const response = await fetch(`${API_BASE_URL}/payment/verify-otp`, {
+  // Xác thực OTP và hoàn tất giao dịch
+  verifyCharge: async ({
+    userId,
+    studentId,
+    transactionId,
+    email,
+    otp,
+  }) => {
+    const response = await fetch(`${API_BASE_URL}/payment/verify-charge`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ transactionId, otp }),
-    });
-    return handleResponse(response);
-  },
-
-  // Gửi lại OTP
-  resendOTP: async (transactionId) => {
-    const response = await fetch(`${API_BASE_URL}/payment/resend-otp`, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ transactionId }),
+      body: JSON.stringify({ userId, studentId, transactionId, email, otp}),
     });
     return handleResponse(response);
   },

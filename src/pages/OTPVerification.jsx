@@ -7,15 +7,21 @@ const OTPVerification = () => {
   const [timeLeft, setTimeLeft] = useState(300); // 5 phút = 300 giây
   const [error, setError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
-  const [canResend, setCanResend] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   // Lấy thông tin giao dịch từ state
-  const { transactionId, studentId, studentName, amount, userEmail } = location.state || {};
+  const {
+    transactionId,
+    studentId,
+    studentName,
+    amount,
+    userEmail,
+    userId,
+  } = location.state || {};
 
   useEffect(() => {
-    if (!transactionId) {
+    if (!transactionId || !userId || !userEmail) {
       navigate("/home");
       return;
     }
@@ -24,7 +30,6 @@ const OTPVerification = () => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          setCanResend(true);
           return 0;
         }
         return prev - 1;
@@ -65,7 +70,13 @@ const OTPVerification = () => {
     setError("");
 
     try {
-      const data = await paymentAPI.verifyOTP(transactionId, otp);
+      const data = await paymentAPI.verifyCharge({
+        userId,
+        studentId,
+        transactionId,
+        email: userEmail,
+        otp,
+      });
       
       if (data.success) {
         navigate("/payment-success", {
@@ -74,7 +85,7 @@ const OTPVerification = () => {
             studentId,
             studentName,
             amount,
-            transactionCode: data.transactionCode,
+            transactionCode: data.transactionCode || transactionId,
           },
         });
       } else {
@@ -84,26 +95,6 @@ const OTPVerification = () => {
       setError("Lỗi kết nối server: " + err.message);
     } finally {
       setIsVerifying(false);
-    }
-  };
-
-  const handleResendOTP = async () => {
-    if (!canResend) return;
-
-    try {
-      const data = await paymentAPI.resendOTP(transactionId);
-      
-      if (data.success) {
-        setTimeLeft(300);
-        setCanResend(false);
-        setOtp("");
-        setError("");
-        alert("Mã OTP mới đã được gửi đến email của bạn");
-      } else {
-        setError(data.message || "Không thể gửi lại mã OTP");
-      }
-    } catch (err) {
-      setError("Lỗi kết nối server: " + err.message);
     }
   };
 
@@ -196,19 +187,6 @@ const OTPVerification = () => {
                 </p>
               )}
             </div>
-
-            {/* Nút gửi lại OTP */}
-            {canResend && (
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleResendOTP}
-                  className="text-blue-600 hover:underline text-sm"
-                >
-                  Gửi lại mã OTP
-                </button>
-              </div>
-            )}
 
             {/* Nút xác nhận */}
             <div className="flex space-x-4">
